@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b1020" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="GA QNH" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <title>GA Climb QNH</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #070b16;
+      --card: #10182a;
+      --card2: #0c1324;
+      --text: #f5f7fb;
+      --muted: #97a3b9;
+      --border: #26324a;
+      --accent: #2f8cff;
+      --danger: #ff7070;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--text); }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+    }
+
+    main {
+      width: min(100%, 560px);
+      padding: max(22px, env(safe-area-inset-top)) 18px max(28px, env(safe-area-inset-bottom));
+    }
+
+    h1 {
+      font-size: 28px;
+      line-height: 1.15;
+      margin: 10px 0 6px;
+      letter-spacing: -0.02em;
+    }
+
+    .subtitle {
+      margin: 0 0 22px;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: 0 16px 40px rgba(0,0,0,.25);
+    }
+
+    .field { margin-bottom: 16px; }
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: .04em;
+      color: var(--muted);
+      margin-bottom: 7px;
+      text-transform: uppercase;
+    }
+
+    .input-wrap {
+      position: relative;
+    }
+
+    input {
+      width: 100%;
+      height: 58px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--card2);
+      color: var(--text);
+      font-size: 24px;
+      font-weight: 700;
+      padding: 0 68px 0 14px;
+      outline: none;
+    }
+
+    input:focus { border-color: var(--accent); }
+    .unit {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    button {
+      width: 100%;
+      height: 58px;
+      margin-top: 4px;
+      border: 0;
+      border-radius: 12px;
+      background: var(--accent);
+      color: white;
+      font-size: 18px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    button:active { transform: translateY(1px); }
+
+    .result {
+      display: none;
+      margin-top: 18px;
+      padding: 18px;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background: #0a1326;
+    }
+
+    .result.show { display: block; }
+    .result-title {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    .result-qnh {
+      font-size: 52px;
+      font-weight: 900;
+      line-height: 1;
+      margin: 8px 0 4px;
+      letter-spacing: -0.04em;
+    }
+
+    .result-qnh span {
+      font-size: 20px;
+      color: var(--muted);
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    .detail {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 14px;
+    }
+
+    .error {
+      display: none;
+      margin-top: 14px;
+      color: var(--danger);
+      font-weight: 700;
+      line-height: 1.45;
+    }
+
+    .error.show { display: block; }
+
+    .note {
+      margin: 16px 2px 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .version {
+      margin-top: 16px;
+      text-align: center;
+      color: #5f6b80;
+      font-size: 11px;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>GA Climb QNH</h1>
+    <section class="panel">
+      <div class="field">
+        <label for="elev">Aerodrome elevation</label>
+        <div class="input-wrap">
+          <input id="elev" type="number" inputmode="numeric" step="1" placeholder="64" autocomplete="off">
+          <span class="unit">ft</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="gaAlt">Missed Approach Altitude</label>
+        <div class="input-wrap">
+          <input id="gaAlt" type="number" inputmode="numeric" step="1" placeholder="4000" autocomplete="off">
+          <span class="unit">ft</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="qnh">Local QNH</label>
+        <div class="input-wrap">
+          <input id="qnh" type="number" inputmode="numeric" step="1" placeholder="1010" autocomplete="off">
+          <span class="unit">hPa</span>
+        </div>
+      </div>
+
+      <button id="calculate" type="button">Calculate</button>
+
+      <div id="error" class="error" role="alert"></div>
+
+      <div id="result" class="result" aria-live="polite">
+        <div class="result-title">QNH to enter in ePerf</div>
+        <div class="result-qnh"><span id="tempQnh">—</span> <span>hPa</span></div>
+        <div id="details" class="detail"></div>
+      </div>
+    </section>
+
+    <p class="note">
+      Convenience calculator only. Uses the published half-climb rounding method and QNH adjustment table.
+      Do not extrapolate outside the published table. Verify against current approved company documentation before operational use.
+    </p>
+
+    <div class="version">v0.3</div>
+  </main>
+
+  <script>
+    const qnhAdjustmentByRoundedHalfClimb = {
+      1000: 37,
+      1500: 56,
+      2000: 74,
+      2500: 93,
+      3000: 111,
+      3500: 130,
+      4000: 148
+    };
+
+    const elevEl = document.getElementById("elev");
+    const gaAltEl = document.getElementById("gaAlt");
+    const qnhEl = document.getElementById("qnh");
+    const resultEl = document.getElementById("result");
+    const tempQnhEl = document.getElementById("tempQnh");
+    const detailsEl = document.getElementById("details");
+    const errorEl = document.getElementById("error");
+
+    function showError(message) {
+      resultEl.classList.remove("show");
+      errorEl.textContent = message;
+      errorEl.classList.add("show");
+    }
+
+    function clearError() {
+      errorEl.textContent = "";
+      errorEl.classList.remove("show");
+    }
+
+    function calculate() {
+      clearError();
+
+      const elevation = Number(elevEl.value);
+      const gaAltitude = Number(gaAltEl.value);
+      const localQnh = Number(qnhEl.value);
+
+      if (![elevation, gaAltitude, localQnh].every(Number.isFinite)) {
+        showError("Enter all three values.");
+        return;
+      }
+
+      if (gaAltitude <= elevation) {
+        showError("Missed approach altitude must be above aerodrome elevation.");
+        return;
+      }
+
+      if (localQnh <= 0) {
+        showError("Enter a valid local QNH.");
+        return;
+      }
+
+      const totalClimb = gaAltitude - elevation;
+      const halfClimb = totalClimb / 2;
+      const roundedHalfClimb = Math.ceil(halfClimb / 500) * 500;
+
+      const adjustment = qnhAdjustmentByRoundedHalfClimb[roundedHalfClimb];
+
+      if (adjustment === undefined) {
+        showError(
+          `Rounded half climb is ${roundedHalfClimb} ft. This is outside the published 1000–4000 ft table; no value will be extrapolated.`
+        );
+        return;
+      }
+
+      const tempQnh = localQnh - adjustment;
+
+      tempQnhEl.textContent = Math.round(tempQnh);
+      detailsEl.innerHTML =
+        `Total climb: <strong>${Math.round(totalClimb)} ft</strong><br>` +
+        `Half climb: <strong>${Math.round(halfClimb)} ft</strong> → rounded up to <strong>${roundedHalfClimb} ft</strong><br>` +
+        `QNH adjustment: <strong>−${adjustment} hPa</strong><br>` +
+        `${Math.round(localQnh)} − ${adjustment} = <strong>${Math.round(tempQnh)} hPa</strong>`;
+
+      resultEl.classList.add("show");
+    }
+
+    document.getElementById("calculate").addEventListener("click", calculate);
+
+    [elevEl, gaAltEl, qnhEl].forEach((el) => {
+      el.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") calculate();
+      });
+    });
+
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./service-worker.js");
+      });
+    }
+  </script>
+</body>
+</html>
