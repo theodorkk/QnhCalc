@@ -1,4 +1,4 @@
-const CACHE = "ga-climb-qnh-v3";
+const CACHE = "ga-climb-qnh-v4";
 const ASSETS = [
   "./",
   "./QNHcalc.html",
