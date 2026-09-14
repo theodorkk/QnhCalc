@@ -1,0 +1,20 @@
+{
+  "dataVersion": "TEST-2026-09-14",
+  "airac": "TEST DATA",
+  "airports": [
+    {
+      "id": "TRD-DEMO",
+      "name": "TRD – OM-B example",
+      "elevationFt": 64,
+      "procedures": [
+        {
+          "id": "RWY09-DEMO",
+          "name": "RWY 09 – OM-B example",
+          "missedApproachAltitudeFt": 4000,
+          "status": "demo",
+          "note": "Values taken from the previously supplied OM-B worked example. Test use only; verify against current approved procedure data before any operational use."
+        }
+      ]
+    }
+  ]
+}
