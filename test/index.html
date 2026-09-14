@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b1020">
+  <title>GA Climb QNH – Procedure Test</title>
+  <style>
+    :root{color-scheme:dark;--bg:#070b16;--card:#10182a;--card2:#0c1324;--text:#f5f7fb;--muted:#97a3b9;--border:#26324a;--accent:#2f8cff;--danger:#ff7070}
+    *{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text)}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;display:flex;justify-content:center}main{width:min(100%,560px);padding:22px 18px 28px}h1{font-size:28px;margin:10px 0 4px}.subtitle{color:var(--muted);margin:0 0 18px}.badge{display:inline-block;border:1px solid var(--accent);border-radius:999px;padding:5px 9px;font-size:11px;font-weight:900;letter-spacing:.06em;margin-bottom:12px}.panel{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:18px}.field{margin-bottom:16px}label{display:block;font-size:13px;font-weight:800;letter-spacing:.04em;color:var(--muted);margin-bottom:7px;text-transform:uppercase}select,input{width:100%;height:58px;border-radius:12px;border:1px solid var(--border);background:var(--card2);color:var(--text);font-size:19px;font-weight:700;padding:0 14px;outline:none}input{font-size:24px}select:focus,input:focus{border-color:var(--accent)}button{width:100%;height:58px;border:0;border-radius:12px;background:var(--accent);color:white;font-size:18px;font-weight:800}.meta,.note{color:var(--muted);font-size:12px;line-height:1.5}.meta{margin:-6px 0 16px}.result{display:none;margin-top:18px;padding:18px;border-radius:16px;border:1px solid var(--border);background:#0a1326}.result.show{display:block}.result-title{color:var(--muted);font-size:13px;font-weight:800;text-transform:uppercase}.result-qnh{font-size:52px;font-weight:900;line-height:1;margin:8px 0}.detail{margin-top:12px;padding-top:12px;border-top:1px solid var(--border);color:var(--muted);line-height:1.55;font-size:14px}.error{display:none;margin-top:14px;color:var(--danger);font-weight:700}.error.show{display:block}.note{margin:16px 2px 0}.version{text-align:center;color:#5f6b80;font-size:11px;margin-top:16px}
+  </style>
+</head>
+<body><main>
+  <div class="badge">SEPARATE TEST VERSION</div>
+  <h1>GA Climb QNH</h1>
+  <p class="subtitle">Procedure selection prototype</p>
+  <section class="panel">
+    <div class="field"><label for="airport">Aerodrome</label><select id="airport"></select></div>
+    <div class="field"><label for="procedure">Approach / procedure</label><select id="procedure"></select></div>
+    <div id="meta" class="meta"></div>
+    <div class="field"><label for="qnh">Local QNH</label><input id="qnh" type="number" inputmode="numeric" step="1" placeholder="1010" autocomplete="off"></div>
+    <button id="calculate">Calculate</button>
+    <div id="error" class="error" role="alert"></div>
+    <div id="result" class="result" aria-live="polite"><div class="result-title">QNH to enter in ePerf</div><div class="result-qnh"><span id="tempQnh">—</span> <span style="font-size:24px">hPa</span></div><div id="details" class="detail"></div></div>
+  </section>
+  <p class="note"><strong>Prototype only.</strong> Procedure data in this test build is not a complete or maintained operational database. Verify aerodrome elevation, missed approach altitude and current approved company/procedure documentation before use. No extrapolation outside the published QNH adjustment table.</p>
+  <div id="version" class="version">test</div>
+<script>
+const adjustments={1000:37,1500:56,2000:74,2500:93,3000:111,3500:130,4000:148};
+let db;
+const airport=document.getElementById('airport'),procedure=document.getElementById('procedure'),qnh=document.getElementById('qnh'),meta=document.getElementById('meta'),result=document.getElementById('result'),error=document.getElementById('error');
+function currentAirport(){return db.airports.find(a=>a.id===airport.value)}
+function currentProcedure(){const a=currentAirport();return a&&a.procedures.find(p=>p.id===procedure.value)}
+function fillProcedures(){const a=currentAirport();procedure.innerHTML='';(a?.procedures||[]).forEach(p=>procedure.add(new Option(p.name,p.id)));showMeta()}
+function showMeta(){const a=currentAirport(),p=currentProcedure();meta.textContent=a&&p?`AD ELEV ${a.elevationFt} ft · MA ALT ${p.missedApproachAltitudeFt} ft · ${db.airac}`:''}
+function fail(m){result.classList.remove('show');error.textContent=m;error.classList.add('show')}
+function calculate(){error.classList.remove('show');const a=currentAirport(),p=currentProcedure(),local=Number(qnh.value);if(!a||!p)return fail('Select an aerodrome and procedure.');if(!Number.isFinite(local)||local<=0)return fail('Enter a valid local QNH.');const total=p.missedApproachAltitudeFt-a.elevationFt;if(total<=0)return fail('Stored procedure data is invalid.');const half=total/2,rounded=Math.ceil(half/500)*500,adj=adjustments[rounded];if(adj===undefined)return fail(`Rounded half climb is ${rounded} ft. Outside the published 1000–4000 ft table; no value will be extrapolated.`);const temp=Math.round(local-adj);document.getElementById('tempQnh').textContent=temp;document.getElementById('details').innerHTML=`${a.name} · ${p.name}<br>AD elevation: <strong>${a.elevationFt} ft</strong> · MA altitude: <strong>${p.missedApproachAltitudeFt} ft</strong><br>Total climb: <strong>${Math.round(total)} ft</strong><br>Half climb: <strong>${Math.round(half)} ft</strong> → rounded up to <strong>${rounded} ft</strong><br>QNH adjustment: <strong>−${adj} hPa</strong><br>${Math.round(local)} − ${adj} = <strong>${temp} hPa</strong>`;result.classList.add('show')}
+fetch('./procedures.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error();return r.json()}).then(data=>{db=data;data.airports.forEach(a=>airport.add(new Option(a.name,a.id)));document.getElementById('version').textContent=`${data.dataVersion} · ${data.airac}`;fillProcedures()}).catch(()=>fail('Could not load procedure test data.'));
+airport.addEventListener('change',fillProcedures);procedure.addEventListener('change',showMeta);document.getElementById('calculate').addEventListener('click',calculate);qnh.addEventListener('keydown',e=>{if(e.key==='Enter')calculate()});
+</script></main></body></html>
